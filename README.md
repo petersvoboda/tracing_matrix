@@ -8,6 +8,45 @@ This project is a web application designed for resource planning and task assign
 *   **Backend:** PHP/Laravel Framework
 *   **Database:** MySQL
 
+## Architecture
+
+The application follows a standard client-server architecture:
+
+*   **Frontend (React Single-Page Application):** Built with React and Vite, using Ant Design for UI components, Zustand for global state management, and React Router for client-side navigation. It interacts with the backend via REST API calls.
+    *   **Key Directories:**
+        *   `src/components`: Reusable UI elements.
+        *   `src/features`: Components specific to application features (e.g., Resource Hub, Task Backlog).
+        *   `src/hooks`: Custom React hooks.
+        *   `src/lib`: Utilities, API client configuration (Axios).
+        *   `src/pages`: Top-level page components.
+        *   `src/store`: Zustand state management stores.
+        *   `src/routes`: Routing configuration.
+*   **Backend (Laravel REST API):** A PHP/Laravel application serving as a RESTful API. It handles business logic, data validation, authentication (using Laravel Sanctum/Passport), and database interactions (using Eloquent ORM).
+    *   Follows standard Laravel MVC structure (`app/Http/Controllers`, `app/Models`, `routes/api.php`).
+    *   Provides endpoints for managing resources, tasks, skills, domains, sprints, assignments, and user authentication.
+    *   Includes logic for calculating resource assignment suggestions based on fit scores and load.
+*   **Database (MySQL):** Stores all application data, including users, resources, tasks, skills, domains, sprints, and their relationships.
+
+### Communication Model
+
+The frontend communicates exclusively with the backend API over HTTPS using REST principles. The backend interacts with the MySQL database.
+
+```mermaid
+graph LR
+    A[User's Browser] -- HTTPS --> B(React Frontend SPA);
+    B -- REST API Calls (Axios) --> C{Laravel Backend API};
+    C -- SQL Queries (Eloquent) --> D[(MySQL Database)];
+
+    subgraph "Client-Side"
+        B
+    end
+
+    subgraph "Server-Side"
+        C
+        D
+    end
+```
+
 ## Deployment Instructions
 
 These instructions assume deployment to a shared hosting environment or similar setup with Apache/Nginx, PHP, and MySQL.
