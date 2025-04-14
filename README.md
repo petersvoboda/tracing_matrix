@@ -187,8 +187,4 @@ MAIN Next Resource Planner is a fullstack web application for project resource p
 
 ## License
 
-<<<<<<< HEAD
 MIT License
-=======
-MIT License
->>>>>>> a170f3684089b415b3f1897a9e950f63dcde3175
