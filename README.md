@@ -185,4 +185,4 @@ Resource Planner is a fullstack web application for project resource planning, t
 
 ## License
 
-MIT License (or specify your license here)
+MIT License
