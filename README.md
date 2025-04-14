@@ -11,9 +11,9 @@ MAIN Next Resource Planner is a fullstack web application for project resource p
 ## Data and Communication Flow
 
 ```
-+-------------------+         HTTP/REST         +-------------------+         SQL/ORM         +-------------------+
++-------------------+         HTTP/REST        +-------------------+         SQL/ORM        +-------------------+
 |    React Frontend | <----------------------> |   Laravel Backend | <--------------------> |     MySQL DB      |
-+-------------------+                         +-------------------+                         +-------------------+
++-------------------+                          +-------------------+                        +-------------------+
         |                                               |                                         |
         | 1. User logs in, manages resources/tasks      |                                         |
         |---------------------------------------------> |                                         |
@@ -23,8 +23,8 @@ MAIN Next Resource Planner is a fullstack web application for project resource p
         |---------------------------------------------> |                                         |
         | 4. Backend fetches/updates data, returns JSON |                                         |
         | <-------------------------------------------- |                                         |
-        |                                               | 5. Eloquent ORM reads/writes tables      |
-        |                                               | <--------------------------------------> |
+        |                                               | 5. Eloquent ORM reads/writes tables     |
+        |                                               | <-------------------------------------> |
 ```
 
 ---
@@ -55,15 +55,15 @@ MAIN Next Resource Planner is a fullstack web application for project resource p
 +---------+      +---------+      +---------+| |
 | skills  |<-----|resource_|----->| domains || |
 +---------+      |skills   |      +---------+| |
-                 +---------+                | |
-                                            | |
+                 +---------+                 | |
+                                             | |
 +---------+      +---------+      +---------+| |
 | tasks   |<-----|task_    |----->| domains || |
 |         |      |skills   |      +---------+| |
-|         |      +---------+                | |
-|         |                                 | |
+|         |      +---------+                 | |
+|         |                                  | |
 |         |      +---------+      +---------+| |
-|         +----->|task_    |----->| skills  |+--+
+|         +----->|task_    |----->| skills  |+-+
 |                |domains  |      +---------+
 |                +---------+
 ```
