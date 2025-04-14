@@ -7,6 +7,9 @@ use App\Http\Controllers\Api\DomainController;
 use App\Http\Controllers\Api\TaskController;
 use App\Http\Controllers\Api\AssignmentController;
 use App\Http\Controllers\Api\SprintController; // Import SprintController
+use App\Http\Controllers\Api\OkrController; // Import OkrController
+use App\Http\Controllers\Api\RiskController; // Import RiskController
+use App\Http\Controllers\Api\DefectController; // Import DefectController
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -55,6 +58,16 @@ Route::middleware('auth:sanctum')->group(function () {
     // Sprint CRUD
     Route::apiResource('/sprints', SprintController::class);
 
+    // OKR CRUD
+    Route::apiResource('/okrs', OkrController::class);
+    // Risk CRUD
+    // Defect CRUD
+    Route::apiResource('/defects', DefectController::class);
+    Route::put('/risks/{risk}', function ($risk, \Illuminate\Http\Request $request) {
+        \Log::info('Catch-all PUT /api/risks/{risk} hit', ['risk' => $risk, 'payload' => $request->all()]);
+        return response()->json(['message' => 'Catch-all route hit', 'risk' => $risk], 200);
+    });
+    Route::apiResource('/risks', RiskController::class);
     // Analytics Endpoints
     Route::get('/analytics/resource-utilization', [\App\Http\Controllers\Api\AnalyticsController::class, 'resourceUtilization'])->middleware('throttle:analytics');
     Route::get('/analytics/assignment-history', [\App\Http\Controllers\Api\AnalyticsController::class, 'assignmentHistory'])->middleware('throttle:analytics');
@@ -63,6 +76,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/analytics/ai-tool-impact', [\App\Http\Controllers\Api\AnalyticsController::class, 'aiToolImpact'])->middleware('throttle:analytics');
     Route::get('/analytics/burnup-burndown', [\App\Http\Controllers\Api\AnalyticsController::class, 'burnupBurndown'])->middleware('throttle:analytics');
     Route::get('/analytics/resource-availability-heatmap', [\App\Http\Controllers\Api\AnalyticsController::class, 'resourceAvailabilityHeatmap'])->middleware('throttle:analytics');
+    Route::get('/analytics/efficiency-metrics', [\App\Http\Controllers\Api\AnalyticsController::class, 'efficiencyMetrics'])->middleware('throttle:analytics');
     // User Management
     // Global OPTIONS handler for CORS preflight
     Route::options('/{any}', function () {

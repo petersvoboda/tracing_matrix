@@ -24,7 +24,7 @@ class UserController extends Controller
                 'name' => 'required|string|max:255',
                 'email' => 'required|email|unique:users,email',
                 'password' => 'required|string|min:6',
-                'role' => 'required|string|in:manager,member',
+                'role' => 'required|string|in:manager,member,productowner',
             ]);
             $user = User::create([
                 'name' => $validated['name'],
@@ -51,7 +51,7 @@ class UserController extends Controller
             'name' => 'sometimes|required|string|max:255',
             'email' => 'sometimes|required|email|unique:users,email,' . $user->id,
             'password' => 'sometimes|nullable|string|min:6',
-            'role' => 'sometimes|required|string|in:manager,member',
+            'role' => 'sometimes|required|string|in:manager,member,productowner',
         ]);
         if (isset($validated['password'])) {
             $validated['password'] = Hash::make($validated['password']);

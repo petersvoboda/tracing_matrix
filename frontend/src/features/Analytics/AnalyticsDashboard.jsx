@@ -26,6 +26,9 @@ const AnalyticsDashboard = () => {
   const [availability, setAvailability] = useState([]);
   const [availabilityLoading, setAvailabilityLoading] = useState(true);
 
+  const [efficiency, setEfficiency] = useState([]);
+  const [efficiencyLoading, setEfficiencyLoading] = useState(true);
+
   // Fetch each widget's data independently for incremental loading
   useEffect(() => {
     setUtilizationLoading(true);
@@ -74,6 +77,13 @@ const AnalyticsDashboard = () => {
     apiClient.get('/analytics/resource-availability-heatmap')
       .then(res => setAvailability(res.data))
       .finally(() => setAvailabilityLoading(false));
+  }, []);
+
+  useEffect(() => {
+      setEfficiencyLoading(true);
+      apiClient.get('/analytics/efficiency-metrics')
+        .then(res => setEfficiency(res.data))
+        .finally(() => setEfficiencyLoading(false));
   }, []);
 
   // Burnup/Burndown chart: guard against division by zero and at least two days
@@ -229,8 +239,8 @@ const AnalyticsDashboard = () => {
                           showInfo={false}
                         />
                       </div>
-                      <span style={{ width: 80, textAlign: 'right' }}>
-                        {item.completed_tasks} tasks, avg {Math.round(item.avg_completion_days)} days
+                      <span style={{ width: 150, textAlign: 'right' }}> {/* Increased width */}
+                        {item.completed_tasks} tasks, avg {Math.round(item.avg_completion_days)} days, {item.total_estimated_effort || 0} effort pts
                       </span>
                     </div>
                   ))}
@@ -238,6 +248,40 @@ const AnalyticsDashboard = () => {
               )}
             </Card>
           </Tooltip>
+        </Col>
+        {/* New Card for Efficiency Metrics */}
+        <Col xs={24} md={12} lg={8}>
+            <Tooltip title="Shows AI overhead coefficient (Overhead Hours / Estimated Effort) for AI-assisted resource types. Lower is better.">
+                <Card title="AI Efficiency & Overhead" size="small">
+                    {efficiencyLoading ? (
+                        <Spin />
+                    ) : (
+                        <>
+                            {efficiency.length === 0 && <div>No efficiency data available.</div>}
+                            {efficiency.filter(item => item.overhead_coefficient !== null).map(item => ( // Only show AI types
+                                <div key={item.type} style={{ marginBottom: 12 }}>
+                                    <span style={{ width: 140, display: 'inline-block', marginRight: 8, fontWeight: 500 }}>{item.type}</span>
+                                    <Statistic
+                                        title="Overhead Coeff."
+                                        value={item.overhead_coefficient}
+                                        precision={2}
+                                        valueStyle={{ fontSize: '1.1em', color: item.overhead_coefficient > 0.5 ? '#cf1322' : '#3f8600' }} // Red if high overhead
+                                        style={{ display: 'inline-block', marginRight: '16px' }}
+                                    />
+                                     <Statistic
+                                        title="Total Overhead (hrs)"
+                                        value={item.total_ai_overhead_hours}
+                                        precision={1}
+                                         valueStyle={{ fontSize: '1.1em' }}
+                                        style={{ display: 'inline-block' }}
+                                    />
+                                    {/* TODO: Add Efficiency Multiplier display here later */}
+                                </div>
+                            ))}
+                        </>
+                    )}
+                </Card>
+            </Tooltip>
         </Col>
       </Row>
       <Row gutter={24} style={{ marginTop: 24 }}>

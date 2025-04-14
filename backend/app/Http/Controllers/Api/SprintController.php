@@ -28,6 +28,11 @@ class SprintController extends Controller
 
     public function show(Sprint $sprint): JsonResponse
     {
+        $sprint->load([
+            'tasks.assignedResource',
+            'risks',
+            'defects'
+        ]);
         return response()->json($sprint);
     }
 

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { Card, Button, Modal, Form, Input, DatePicker, Space, Popconfirm, message, Typography, Collapse } from 'antd';
+import { Card, Button, Modal, Form, Input, DatePicker, Space, Popconfirm, message, Typography, Collapse, Divider } from 'antd';
 import apiClient from '../../lib/api';
 import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
+import { Link } from 'react-router-dom';
 
 dayjs.extend(isSameOrAfter);
 
@@ -154,26 +155,56 @@ const SprintManagement = () => {
 
   return (
     <div style={{ padding: 24 }}>
-      <Title level={2}>Sprint Management (Kanban)</Title>
-      <Button type="primary" onClick={showAddModal} style={{ marginBottom: 16 }}>Add Sprint</Button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <Title level={2} style={{ margin: 0 }}>Sprint Management (Kanban)</Title>
+        <Button type="default" onClick={showAddModal} style={{
+          borderColor: '#1677ff',
+          color: '#1677ff',
+          background: '#fff',
+          fontWeight: 500
+        }}>
+          Add Sprint
+        </Button>
+      </div>
       <DragDropContext onDragEnd={onDragEnd}>
-        <div style={{ display: 'flex', gap: 16, overflowX: 'auto', marginBottom: 32 }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: `repeat(${currentAndFutureSprints.length}, minmax(260px, 1fr))`,
+            gap: 16,
+            marginBottom: 32,
+            width: '100%',
+            overflowX: 'auto',
+            maxWidth: '100vw'
+          }}
+        >
           {currentAndFutureSprints.map(sprint => (
             <Droppable droppableId={String(sprint.id)} key={sprint.id}>
               {(provided) => (
                 <Card
-                  title={sprint.name}
+                  bodyStyle={{ paddingTop: 0 }}
+                  title={<div style={{ fontWeight: 600, fontSize: 18 }}>{sprint.name}</div>}
                   variant="outlined"
                   style={{ minWidth: 260, maxWidth: 320, flex: '0 0 260px' }}
-                  extra={
-                    <Space>
-                      <Button size="small" onClick={() => showEditModal(sprint)}>Edit</Button>
-                      <Popconfirm title="Delete this sprint?" onConfirm={() => handleDelete(sprint.id)}>
-                        <Button size="small" danger>Delete</Button>
-                      </Popconfirm>
-                    </Space>
-                  }
                 >
+                  <div style={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    marginBottom: 4, // 50% smaller than before
+                    marginTop: 4,    // Add top margin for equal padding
+                    minHeight: 40
+                  }}>
+                    <Link to={`/sprints/${sprint.id}`}>
+                      <Button size="small">View</Button>
+                    </Link>
+                    <Button size="small" onClick={() => showEditModal(sprint)} style={{ marginLeft: 8 }}>Edit</Button>
+                    <Popconfirm title="Delete this sprint?" onConfirm={() => handleDelete(sprint.id)}>
+                      <Button size="small" danger style={{ marginLeft: 8 }}>Delete</Button>
+                    </Popconfirm>
+                  </div>
+                  <Divider style={{ margin: '4px 0' }} />
                   <div ref={provided.innerRef} {...provided.droppableProps} style={{ minHeight: 60 }}>
                     {tasksBySprint[sprint.id]?.map((task, idx) => (
                       <Draggable key={task.id} draggableId={String(task.id)} index={idx}>
@@ -213,19 +244,23 @@ const SprintManagement = () => {
                   {pastSprints.map(sprint => (
                     <Card
                       key={sprint.id}
-                      title={sprint.name}
+                      title={<div style={{ fontWeight: 600, fontSize: 18 }}>{sprint.name}</div>}
                       variant="outlined"
                       style={{ minWidth: 260, maxWidth: 320, flex: '0 0 260px' }}
-                      extra={
-                        <Button size="small" onClick={() => showEditModal(sprint)}>Edit</Button>
-                      }
                     >
+                      <div style={{ display: 'flex', gap: 8, marginBottom: 8 }}>
+                        <Link to={`/sprints/${sprint.id}`}>
+                          <Button size="small">View</Button>
+                        </Link>
+                        <Button size="small" onClick={() => showEditModal(sprint)}>Edit</Button>
+                      </div>
                       {tasksBySprint[sprint.id]?.map(task => (
                         <div key={task.id} style={{ background: '#f5f5f5', borderRadius: 4, marginBottom: 8, padding: 8 }}>
                           {task.title_id} ({task.status})
                         </div>
                       ))}
-                    </Card>
+                    <Divider style={{ margin: '8px 0' }} />
+                  </Card>
                   ))}
                 </div>
               )

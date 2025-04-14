@@ -1,5 +1,6 @@
 import React from 'react';
 import { Table, Tag, Space, Button, Tooltip, Popconfirm } from 'antd';
+import { Link } from 'react-router-dom';
 import { EditOutlined, DeleteOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 
 // Helper function to determine tag color based on status/priority
@@ -66,7 +67,22 @@ const TaskList = ({ tasks, loading, onEdit, onDelete }) => {
         const bName = b.assigned_resource?.name_identifier || b.assigned_resource?.name || '';
         return aName.localeCompare(bName);
       },
-      render: (resource) => resource ? (resource.name_identifier || resource.name || '-') : '-',
+      render: (resource) => resource
+        ? <Tag color="blue">{resource.name_identifier || resource.name || '-'}</Tag>
+        : <Tag color="default">Unassigned</Tag>,
+    },
+    {
+      title: 'OKRs',
+      dataIndex: 'okrs',
+      key: 'okrs',
+      render: (okrs) =>
+        Array.isArray(okrs) && okrs.length > 0
+          ? okrs.map(okr => (
+              <Link key={okr.id} to={`/okrs/${okr.id}`}>
+                <Tag color="geekblue" style={{ marginBottom: 2 }}>{okr.objective || `OKR #${okr.id}`}</Tag>
+              </Link>
+            ))
+          : '-',
     },
     {
       title: 'Sprint',
@@ -117,6 +133,11 @@ const TaskList = ({ tasks, loading, onEdit, onDelete }) => {
       key: 'actions',
       render: (_, record) => (
         <Space size="middle">
+          <Tooltip title="View Task">
+            <Link to={`/tasks/${record.id}`}>
+              <Button size="small">View</Button>
+            </Link>
+          </Tooltip>
           <Tooltip title="Edit">
             <Button type="link" icon={<EditOutlined />} onClick={() => onEdit(record)} />
           </Tooltip>

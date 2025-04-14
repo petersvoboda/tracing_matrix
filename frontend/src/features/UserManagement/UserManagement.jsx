@@ -112,8 +112,12 @@ const UserManagement = () => {
 
   return (
     <div style={{ padding: 24 }}>
-      <Title level={2}>User Management</Title>
-      <Button type="primary" onClick={showAddModal} style={{ marginBottom: 16 }}>Add User</Button>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <Title level={2} style={{ margin: 0 }}>User Management</Title>
+        <Button type="primary" onClick={showAddModal}>
+          Add User
+        </Button>
+      </div>
       <Table
         columns={columns}
         dataSource={users}
@@ -147,6 +151,7 @@ const UserManagement = () => {
             <Select>
               <Option value="manager">Project Manager</Option>
               <Option value="member">Team Member</Option>
+              <Option value="productowner">Product Owner</Option>
             </Select>
           </Form.Item>
         </Form>

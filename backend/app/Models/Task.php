@@ -4,6 +4,8 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\MorphMany; // Import MorphMany
 
 class Task extends Model
 {
@@ -110,5 +112,28 @@ class Task extends Model
         );
         // Simpler alternative (often preferred):
         // return $this->assignment ? $this->assignment->resource : null;
+    }
+
+    /**
+     * The OKRs that this task belongs to.
+     */
+    public function okrs(): BelongsToMany
+    {
+        return $this->belongsToMany(Okr::class, 'okr_task'); // Using the pivot table name
+    }
+
+    /**
+     * Get all of the task's risks.
+     */
+    public function risks(): MorphMany
+    {
+        return $this->morphMany(Risk::class, 'linkable');
+    }
+    /**
+     * Get all of the task's defects.
+     */
+    public function defects(): MorphMany
+    {
+        return $this->morphMany(Defect::class, 'linkable');
     }
 }

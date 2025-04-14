@@ -9,7 +9,9 @@ import {
   LogoutOutlined,
   BarChartOutlined,
   CalendarOutlined,
-  TeamOutlined
+  TeamOutlined,
+  AimOutlined, // Added for OKRs
+  WarningOutlined // Added for Risks
 } from '@ant-design/icons';
 import './App.css';
 import ResourceHub from './features/ResourceHub/ResourceHub';
@@ -21,6 +23,12 @@ import AssignmentWorkbench from './features/AssignmentWorkbench/AssignmentWorkbe
 import AnalyticsDashboard from './features/Analytics/AnalyticsDashboard';
 import SprintManagement from './features/SprintManagement/SprintManagement';
 import UserManagement from './features/UserManagement/UserManagement';
+import OkrManagement from './features/OkrManagement/OkrManagement'; // Added OKR Management
+import RiskManagement from './features/RiskManagement/RiskManagement'; // Added Risk Management
+import OkrDetail from './features/OkrManagement/OkrDetail'; // OKR Detail Page
+import TaskDetail from './features/TaskBacklog/TaskDetail'; // Task Detail Page
+import RiskDetail from './features/RiskManagement/RiskDetail'; // Risk Detail Page
+import SprintDetail from './features/SprintManagement/SprintDetail'; // Sprint Detail Page
 
 const { Content, Footer, Sider } = Layout;
 
@@ -43,6 +51,8 @@ const AppLayout = () => {
     if (path.startsWith('/analytics')) return ['/analytics'];
     if (path.startsWith('/sprints')) return ['/sprints'];
     if (path.startsWith('/users')) return ['/users'];
+    if (path.startsWith('/okrs')) return ['/okrs']; // Added OKR path
+    if (path.startsWith('/risks')) return ['/risks']; // Added Risk path
     return ['/'];
   };
 
@@ -53,6 +63,8 @@ const AppLayout = () => {
     { key: '/assignments', icon: <ToolOutlined />, label: <Link to="/assignments">Assignments</Link> },
     { key: '/analytics', icon: <BarChartOutlined />, label: <Link to="/analytics">Analytics</Link> },
     { key: '/sprints', icon: <CalendarOutlined />, label: <Link to="/sprints">Sprints</Link> },
+    { key: '/okrs', icon: <AimOutlined />, label: <Link to="/okrs">OKRs</Link> }, // Added OKR Menu Item
+    { key: '/risks', icon: <WarningOutlined />, label: <Link to="/risks">Risks</Link> }, // Added Risk Menu Item
     { key: '/users', icon: <TeamOutlined />, label: <Link to="/users">Users</Link> },
   ];
 
@@ -64,6 +76,8 @@ const AppLayout = () => {
       case '/assignments': return 'Assignments';
       case '/analytics': return 'Analytics';
       case '/sprints': return 'Sprints';
+      case '/okrs': return 'OKR Management'; // Added OKR Breadcrumb
+      case '/risks': return 'Risk Management'; // Added Risk Breadcrumb
       case '/users': return 'Users';
       case '/':
       default: return 'Dashboard';
@@ -104,9 +118,15 @@ const AppLayout = () => {
               <Route index element={<Dashboard />} />
               <Route path="resources" element={<ResourceHub />} />
               <Route path="tasks" element={<TaskBacklog />} />
+              <Route path="tasks/:id" element={<TaskDetail />} /> {/* Task Detail Route */}
               <Route path="assignments" element={<AssignmentWorkbench />} />
               <Route path="analytics" element={<AnalyticsDashboard />} />
               <Route path="sprints" element={<SprintManagement />} />
+              <Route path="sprints/:id" element={<SprintDetail />} /> {/* Sprint Detail Route */}
+              <Route path="okrs" element={<OkrManagement />} /> {/* Added OKR Route */}
+              <Route path="okrs/:id" element={<OkrDetail />} /> {/* OKR Detail Route */}
+              <Route path="risks" element={<RiskManagement />} /> {/* Added Risk Route */}
+              <Route path="risks/:id" element={<RiskDetail />} /> {/* Risk Detail Route */}
               <Route path="users" element={<UserManagement />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

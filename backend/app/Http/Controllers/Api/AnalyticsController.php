@@ -159,13 +159,17 @@ class AnalyticsController extends Controller
                 $completionTimes = $completedTasks->map(function ($a) {
                     $created = Carbon::parse($a->task->created_at);
                     $done = Carbon::parse($a->task->updated_at);
-                    return $done->diffInHours($created) / 24;
+                    return $done->diffInHours($created) / 24; // Convert hours to days
                 });
+
+                $totalEffort = $assignments->sum(fn($a) => $a->task->estimated_effort ?? 0);
                 $avgCompletion = $completionTimes->count() > 0 ? round($completionTimes->avg(), 2) : 0;
+
                 $result[] = [
                     'type' => $type,
                     'avg_completion_days' => $avgCompletion,
                     'completed_tasks' => $completedTasks->count(),
+                    'total_estimated_effort' => $totalEffort, // Added total effort by type
                 ];
             }
 
@@ -289,6 +293,52 @@ class AnalyticsController extends Controller
         } catch (\Throwable $e) {
             \Log::error('Resource Availability Heatmap Error', ['error' => $e->getMessage()]);
             return response()->json([]);
+        }
+    }
+
+
+    public function efficiencyMetrics(Request $request): JsonResponse
+    {
+        try {
+            $types = ['Human', 'AI Tool', 'Human + AI Tool'];
+            $result = [];
+
+            foreach ($types as $type) {
+                // Fetch resources of the current type
+                $resources = Resource::where('type', $type)->pluck('id');
+
+                // Fetch assignments for these resources, including tasks
+                $assignments = Assignment::whereIn('resource_id', $resources)
+                                ->with('task') // Eager load tasks
+                                ->get();
+
+                $totalEffort = $assignments->sum(fn($a) => $a->task->estimated_effort ?? 0);
+                $totalOverhead = 0;
+                $overheadCoefficient = null;
+
+                // Calculate overhead only for AI-related types
+                if ($type === 'AI Tool' || $type === 'Human + AI Tool') {
+                    $totalOverhead = $assignments->sum('ai_overhead_hours');
+                    if ($totalEffort > 0) {
+                        // Overhead Coefficient = Total Overhead Hours / Total Estimated Effort (in hours, assuming effort is in hours)
+                        // Note: Ensure 'estimated_effort' unit is consistent (e.g., hours)
+                        $overheadCoefficient = round($totalOverhead / $totalEffort, 2);
+                    }
+                }
+
+                $result[] = [
+                    'type' => $type,
+                    'total_estimated_effort' => $totalEffort,
+                    'total_ai_overhead_hours' => $totalOverhead,
+                    'overhead_coefficient' => $overheadCoefficient, // Overhead per unit of estimated effort
+                    // TODO: Add Efficiency Multiplier calculation if baseline is available
+                ];
+            }
+
+            return response()->json($result);
+        } catch (\Throwable $e) {
+            \Log::error('Efficiency Metrics Error', ['error' => $e->getMessage()]);
+            return response()->json([], 500); // Return 500 on error
         }
     }
 }

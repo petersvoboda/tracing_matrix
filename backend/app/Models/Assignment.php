@@ -17,7 +17,8 @@ class Assignment extends Model
     protected $fillable = [
         'task_id',
         'resource_id',
-        'assigned_at', // Allow mass assignment if needed, otherwise remove
+        'assigned_at',
+        'ai_overhead_hours', // Added AI overhead tracking
     ];
 
     /**

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphMany; // Import MorphMany
 
 class Sprint extends Model
 {
@@ -46,5 +47,20 @@ class Sprint extends Model
     public function tasks()
     {
         return $this->hasMany(Task::class);
+    }
+
+    /**
+     * Get all of the sprint's risks.
+     */
+    public function risks(): MorphMany
+    {
+        return $this->morphMany(Risk::class, 'linkable');
+    }
+    /**
+     * Get all of the sprint's defects.
+     */
+    public function defects(): MorphMany
+    {
+        return $this->morphMany(Defect::class, 'linkable');
     }
 }

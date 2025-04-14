@@ -2,7 +2,11 @@
 
 ## Overview
 
+<<<<<<< HEAD
 MAIN Next Resource Planner is a fullstack web application for project resource planning, task assignment, sprint management, and advanced analytics. It supports both human and AI resources, Kanban-style sprint assignment, and role-based user management.
+=======
+MAIN Next Resource Planner is a fullstack web application for project resource planning, task assignment, sprint management, and advanced analytics. It supports both human and AI resources, sprint assignment, and role-based user management.
+>>>>>>> a170f3684089b415b3f1897a9e950f63dcde3175
 
 ---
 
@@ -185,4 +189,8 @@ MAIN Next Resource Planner is a fullstack web application for project resource p
 
 ## License
 
+<<<<<<< HEAD
 MIT License
+=======
+MIT License
+>>>>>>> a170f3684089b415b3f1897a9e950f63dcde3175
