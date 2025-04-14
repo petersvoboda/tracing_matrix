@@ -207,22 +207,68 @@ class TaskController extends Controller
                  $scoreBreakdown['domain_match'] = "No specific domains required.";
             }
 
-            // --- Productivity Multipliers (Simplified Example) ---
-            // TODO: Implement properly based on task type/skills and resource multipliers JSON
-            $productivityMultiplier = 1.0; // Default
-            // Example: if task needs React and resource has multiplier for it
-            // if ($requiredSkillIds->contains(SKILL_ID_FOR_REACT) && isset($resource->productivity_multipliers['react_skill_id'])) {
-            //     $productivityMultiplier = $resource->productivity_multipliers['react_skill_id'];
-            //     $score *= $productivityMultiplier; // Apply multiplier
-            //     $scoreBreakdown['productivity'] = "Multiplier: {$productivityMultiplier}";
-            // }
+            // --- Productivity Multipliers (Proficiency-Adjusted) ---
+            $baseMultiplier = 1.0;
+            if (is_array($resource->productivity_multipliers) && isset($resource->productivity_multipliers['base'])) {
+                $baseMultiplier = floatval($resource->productivity_multipliers['base']);
+            }
+            // Adjust skill score by proficiency-adjusted multiplier
+            if ($matchingSkills->count() > 0) {
+                foreach ($matchingSkills as $skill) {
+                    $proficiency = $skill->pivot->proficiency_level ?? 1;
+                    $effectiveMultiplier = $baseMultiplier * ($proficiency / 5.0);
+                    $score += $proficiency * 10 * $effectiveMultiplier; // Weight skill score, adjusted
+                    $scoreBreakdown['productivity_skill_' . $skill->id] = "Multiplier: {$effectiveMultiplier} (Proficiency: {$proficiency})";
+                }
+            }
+            // Adjust domain score by proficiency-adjusted multiplier
+            if ($matchingDomains->count() > 0) {
+                foreach ($matchingDomains as $domain) {
+                    $proficiency = $domain->pivot->proficiency_level ?? 1;
+                    $effectiveMultiplier = $baseMultiplier * ($proficiency / 5.0);
+                    $score += $proficiency * 5 * $effectiveMultiplier; // Weight domain score, adjusted
+                    $scoreBreakdown['productivity_domain_' . $domain->id] = "Multiplier: {$effectiveMultiplier} (Proficiency: {$proficiency})";
+                }
+            }
 
-             // --- AI Tool Factors (Simplified Example) ---
-             if ($resource->type === 'AI Tool' || $resource->type === 'Human + AI Tool') {
-                 // Penalize slightly for learning curve? Boost for potential?
-                 // $score += 5; // Example boost
-                 // $scoreBreakdown['ai_factor'] = "AI Tool bonus applied";
-             }
+            // --- AI Tool Factors (Learning Curve, Maintenance, Compatibility) ---
+            if ($resource->type === 'AI Tool' || $resource->type === 'Human + AI Tool') {
+                // Learning Curve
+                $learningCurve = strtolower($resource->learning_curve ?? '');
+                if ($learningCurve === 'medium') {
+                    $score *= 0.9; // -10%
+                    $scoreBreakdown['ai_learning_curve'] = "Medium (-10%)";
+                } elseif ($learningCurve === 'high') {
+                    $score *= 0.8; // -20%
+                    $scoreBreakdown['ai_learning_curve'] = "High (-20%)";
+                } elseif ($learningCurve === 'low') {
+                    $scoreBreakdown['ai_learning_curve'] = "Low (no penalty)";
+                }
+
+                // Maintenance Overhead
+                $maintenance = isset($resource->maintenance_overhead) ? floatval($resource->maintenance_overhead) : 0;
+                if ($maintenance > 40) {
+                    $score *= 0.8; // -20%
+                    $scoreBreakdown['ai_maintenance'] = "Very High (>40h/mo, -20%)";
+                } elseif ($maintenance > 20) {
+                    $score *= 0.9; // -10%
+                    $scoreBreakdown['ai_maintenance'] = "High (>20h/mo, -10%)";
+                } else {
+                    $scoreBreakdown['ai_maintenance'] = "{$maintenance}h/mo (no penalty)";
+                }
+
+                // Integration Compatibility
+                $compat = strtolower($resource->integration_compatibility ?? '');
+                if (strpos($compat, 'excellent') !== false || strpos($compat, 'native') !== false) {
+                    $score *= 1.1; // +10%
+                    $scoreBreakdown['ai_compatibility'] = "Excellent/Native (+10%)";
+                } elseif (strpos($compat, 'poor') !== false || strpos($compat, 'manual') !== false) {
+                    $score *= 0.9; // -10%
+                    $scoreBreakdown['ai_compatibility'] = "Poor/Manual (-10%)";
+                } else {
+                    $scoreBreakdown['ai_compatibility'] = "Standard (no bonus/penalty)";
+                }
+            }
 
              // --- Availability / Load (Placeholder) ---
              // TODO: Calculate actual load based on assigned tasks' effort within a timeframe (e.g., sprint)

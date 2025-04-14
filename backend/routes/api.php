@@ -52,8 +52,23 @@ Route::middleware('auth:sanctum')->group(function () {
     // Resource Load Calculation
     Route::get('/resources/{resource}/load', [ResourceController::class, 'calculateLoad']);
 
-    // Sprint List
-    Route::get('/sprints', [SprintController::class, 'index']);
+    // Sprint CRUD
+    Route::apiResource('/sprints', SprintController::class);
 
+    // Analytics Endpoints
+    Route::get('/analytics/resource-utilization', [\App\Http\Controllers\Api\AnalyticsController::class, 'resourceUtilization'])->middleware('throttle:analytics');
+    Route::get('/analytics/assignment-history', [\App\Http\Controllers\Api\AnalyticsController::class, 'assignmentHistory'])->middleware('throttle:analytics');
+    Route::get('/analytics/completion-rates', [\App\Http\Controllers\Api\AnalyticsController::class, 'completionRates'])->middleware('throttle:analytics');
+    Route::get('/analytics/task-blockers', [\App\Http\Controllers\Api\AnalyticsController::class, 'taskBlockers'])->middleware('throttle:analytics');
+    Route::get('/analytics/ai-tool-impact', [\App\Http\Controllers\Api\AnalyticsController::class, 'aiToolImpact'])->middleware('throttle:analytics');
+    Route::get('/analytics/burnup-burndown', [\App\Http\Controllers\Api\AnalyticsController::class, 'burnupBurndown'])->middleware('throttle:analytics');
+    Route::get('/analytics/resource-availability-heatmap', [\App\Http\Controllers\Api\AnalyticsController::class, 'resourceAvailabilityHeatmap'])->middleware('throttle:analytics');
+    // User Management
+    // Global OPTIONS handler for CORS preflight
+    Route::options('/{any}', function () {
+        return response()->json([], 204);
+    })->where('any', '.*');
+    Route::apiResource('/users', \App\Http\Controllers\Api\UserController::class)->middleware('role:manager');
+    Route::apiResource('/sprints', \App\Http\Controllers\Api\SprintController::class)->middleware('role:manager');
     // Add other protected API routes here later
 });

@@ -3,23 +3,48 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Sprint; // Import Sprint model
+use App\Models\Sprint;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
 
 class SprintController extends Controller
 {
-    /**
-     * Display a listing of the sprints.
-     *
-     * @return \Illuminate\Http\JsonResponse
-     */
     public function index(): JsonResponse
     {
-        // Order by start date perhaps?
         $sprints = Sprint::orderBy('start_date', 'desc')->get();
         return response()->json($sprints);
     }
 
-    // TODO: Add store, show, update, destroy methods later if full Sprint CRUD is needed
+    public function store(Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+        ]);
+        $sprint = Sprint::create($validated);
+        return response()->json($sprint, 201);
+    }
+
+    public function show(Sprint $sprint): JsonResponse
+    {
+        return response()->json($sprint);
+    }
+
+    public function update(Request $request, Sprint $sprint): JsonResponse
+    {
+        $validated = $request->validate([
+            'name' => 'sometimes|required|string|max:255',
+            'start_date' => 'sometimes|required|date',
+            'end_date' => 'sometimes|required|date|after_or_equal:start_date',
+        ]);
+        $sprint->update($validated);
+        return response()->json($sprint);
+    }
+
+    public function destroy(Sprint $sprint): JsonResponse
+    {
+        $sprint->delete();
+        return response()->json(null, 204);
+    }
 }

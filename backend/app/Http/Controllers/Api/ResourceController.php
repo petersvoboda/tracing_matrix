@@ -59,6 +59,13 @@ class ResourceController extends Controller
 
         // TODO: Add logic to handle conditional requirement based on 'type' if strict validation is needed
 
+        // Decode JSON fields if they are strings
+        if (isset($validatedData['availability_params']) && is_string($validatedData['availability_params'])) {
+            $validatedData['availability_params'] = json_decode($validatedData['availability_params'], true);
+        }
+        if (isset($validatedData['productivity_multipliers']) && is_string($validatedData['productivity_multipliers'])) {
+            $validatedData['productivity_multipliers'] = json_decode($validatedData['productivity_multipliers'], true);
+        }
         $resource = Resource::create($validatedData);
 
         // Handle associating skills/domains
@@ -130,6 +137,13 @@ class ResourceController extends Controller
             'domains.*.proficiency_level' => ['required_with:domains', 'integer', 'min:1', 'max:5'],
         ]);
 
+        // Decode JSON fields if they are strings
+        if (isset($validatedData['availability_params']) && is_string($validatedData['availability_params'])) {
+            $validatedData['availability_params'] = json_decode($validatedData['availability_params'], true);
+        }
+        if (isset($validatedData['productivity_multipliers']) && is_string($validatedData['productivity_multipliers'])) {
+            $validatedData['productivity_multipliers'] = json_decode($validatedData['productivity_multipliers'], true);
+        }
         $resource->update($validatedData);
 
         // Handle updating skills/domains relationships
@@ -212,10 +226,72 @@ class ResourceController extends Controller
         // --- Calculate Availability (Placeholder/Simplified) ---
         // This needs a proper implementation based on how availability_params are stored and interpreted
         // Example: Assume standard 40 hours/week if no params, or parse FTE/hours from JSON
-        $baseAvailability = 40; // Example: hours per week
-        $fte = $resource->availability_params['fte'] ?? 1.0; // Example: read FTE from JSON
-        $resourceAvailability = $baseAvailability * $fte;
-        // TODO: Factor in sprint duration, working days, timezones, leave etc. for accurate calculation
+        // --- Real Availability Calculation ---
+        $baseAvailability = 40; // Default: 40 hours/week
+        $fte = $resource->availability_params['fte'] ?? 1.0;
+        $workingHours = $resource->availability_params['working_hours'] ?? null;
+        $plannedLeave = $resource->availability_params['planned_leave'] ?? [];
+        $resourceAvailability = 0;
+
+        // Determine period (sprint) for calculation
+        $periodStart = null;
+        $periodEnd = null;
+        if ($sprintId && $resource->assignments()->with('task')->whereHas('task', fn($q) => $q->where('sprint_id', $sprintId))->exists()) {
+            $sprint = \App\Models\Sprint::find($sprintId);
+            if ($sprint) {
+                $periodStart = \Carbon\Carbon::parse($sprint->start_date);
+                $periodEnd = \Carbon\Carbon::parse($sprint->end_date);
+            }
+        }
+        if (!$periodStart || !$periodEnd) {
+            // Default to current week
+            $periodStart = \Carbon\Carbon::now()->startOfWeek();
+            $periodEnd = \Carbon\Carbon::now()->endOfWeek();
+        }
+
+        // Calculate total available hours in the period
+        $totalAvailableHours = 0;
+        $current = $periodStart->copy();
+        while ($current->lte($periodEnd)) {
+            $dayOfWeek = $current->dayOfWeekIso; // 1=Mon, 7=Sun
+            $isWorkingDay = true;
+            $workStart = 9; // Default 9:00
+            $workEnd = 17;  // Default 17:00
+            if ($workingHours) {
+                if (isset($workingHours['days']) && is_array($workingHours['days'])) {
+                    $isWorkingDay = in_array($dayOfWeek, $workingHours['days']);
+                }
+                if (isset($workingHours['start'])) {
+                    $workStart = intval(explode(':', $workingHours['start'])[0]);
+                }
+                if (isset($workingHours['end'])) {
+                    $workEnd = intval(explode(':', $workingHours['end'])[0]);
+                }
+            }
+            // Subtract planned leave
+            $onLeave = false;
+            foreach ($plannedLeave as $leave) {
+                if (isset($leave['start'], $leave['end'])) {
+                    $leaveStart = \Carbon\Carbon::parse($leave['start']);
+                    $leaveEnd = \Carbon\Carbon::parse($leave['end']);
+                    if ($current->between($leaveStart, $leaveEnd)) {
+                        $onLeave = true;
+                        break;
+                    }
+                }
+            }
+            if ($isWorkingDay && !$onLeave) {
+                $hours = max(0, $workEnd - $workStart);
+                $totalAvailableHours += $hours;
+            }
+            $current->addDay();
+        }
+        // Apply FTE
+        $resourceAvailability = $totalAvailableHours * $fte;
+        // Fallback to baseAvailability * fte if no working hours specified
+        if ($resourceAvailability === 0) {
+            $resourceAvailability = $baseAvailability * $fte;
+        }
 
         // Calculate Load Percentage
         $loadPercentage = 0;

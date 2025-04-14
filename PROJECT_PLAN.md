@@ -217,3 +217,34 @@ This document outlines the plan for developing the Resource Planning and Task As
     *   **Environment Variables:** Secure handling of sensitive data (API keys, DB passwords).
 4.  **Deployment:** Deploy to the shared hosting environment following the documented steps.
 5.  **Final Testing:** Perform testing on the live environment.
+
+---
+
+## Prioritized Task Roadmap (Next Steps)
+
+### 1. Critical UX/UI Enhancements
+- [ ] Add filtering and sorting controls to TaskBacklog (by status, sprint, priority, assignee).
+- [ ] Add filters to Status and Priority columns in TaskList.
+- [ ] Add columns for assigned resource, sprint, deadline, skills, and domains in TaskList.
+- [ ] Add row selection and expandable rows for details in TaskList.
+- [ ] Add fields for resource availability (FTE, working hours, timezone, leave) and productivity multipliers in ResourceForm.
+
+### 2. Assignment Logic & Analytics
+- [ ] Refine backend fit score algorithm (resource availability, productivity multipliers, AI tool factors, dependencies, overload penalty).
+- [ ] Fetch resource load for all suggested resources when fetching suggestions.
+- [ ] Re-fetch resource load after assignment/unassignment.
+- [ ] Add analytics endpoints (resource utilization, assignment history, task completion rates).
+- [ ] Visualize analytics in the frontend (charts, dashboards).
+
+### 3. User Management & Authorization
+- [ ] Implement user roles (Project Manager, Team Member, Viewer) and authorization in backend.
+- [ ] Add user management UI and role-based access control in frontend.
+- [ ] Add frontend registration action/UI if needed.
+- [ ] Display current user info and role in the UI.
+
+### 4. Sprint Management
+- [ ] Implement CRUD actions for sprints in sprintStore.js and add Sprint management UI if needed.
+
+---
+
+This roadmap should be reviewed and updated as features are completed or priorities change.

@@ -24,9 +24,7 @@ const getPriorityColor = (priority) => {
   }
 };
 
-
 const TaskList = ({ tasks, loading, onEdit, onDelete }) => {
-
   const columns = [
     {
       title: 'Title/ID',
@@ -38,16 +36,16 @@ const TaskList = ({ tasks, loading, onEdit, onDelete }) => {
       title: 'Status',
       dataIndex: 'status',
       key: 'status',
-      // TODO: Add filters based on actual statuses
+      sorter: (a, b) => a.status.localeCompare(b.status),
       render: (status) => (
         <Tag color={getStatusColor(status)}>{status}</Tag>
       ),
     },
-     {
+    {
       title: 'Priority',
       dataIndex: 'priority',
       key: 'priority',
-      // TODO: Add filters based on actual priorities
+      sorter: (a, b) => a.priority.localeCompare(b.priority),
       render: (priority) => (
         <Tag color={getPriorityColor(priority)}>{priority}</Tag>
       ),
@@ -59,14 +57,61 @@ const TaskList = ({ tasks, loading, onEdit, onDelete }) => {
       sorter: (a, b) => (a.estimated_effort || 0) - (b.estimated_effort || 0),
       render: (effort) => effort || '-',
     },
-    // TODO: Add columns for Assigned Resource, Sprint, Deadline, Skills, Domains etc. later
-    // Example: Assigned Resource
-    // {
-    //   title: 'Assigned To',
-    //   dataIndex: 'assignedResource', // Assumes eager loading in controller
-    //   key: 'assignedResource',
-    //   render: (resource) => resource ? resource.name_identifier : '-',
-    // },
+    {
+      title: 'Assigned Resource',
+      dataIndex: 'assigned_resource',
+      key: 'assigned_resource',
+      sorter: (a, b) => {
+        const aName = a.assigned_resource?.name_identifier || a.assigned_resource?.name || '';
+        const bName = b.assigned_resource?.name_identifier || b.assigned_resource?.name || '';
+        return aName.localeCompare(bName);
+      },
+      render: (resource) => resource ? (resource.name_identifier || resource.name || '-') : '-',
+    },
+    {
+      title: 'Sprint',
+      dataIndex: 'sprint',
+      key: 'sprint',
+      sorter: (a, b) => {
+        const aName = a.sprint?.name || a.sprint?.title || '';
+        const bName = b.sprint?.name || b.sprint?.title || '';
+        return aName.localeCompare(bName);
+      },
+      render: (sprint) => sprint ? (sprint.name || sprint.title || '-') : '-',
+    },
+    {
+      title: 'Deadline',
+      dataIndex: 'deadline',
+      key: 'deadline',
+      render: (deadline) => deadline ? new Date(deadline).toLocaleDateString() : '-',
+      sorter: (a, b) => new Date(a.deadline || 0) - new Date(b.deadline || 0),
+    },
+    {
+      title: 'Required Skills',
+      dataIndex: 'required_skills',
+      key: 'required_skills',
+      sorter: (a, b) => {
+        const aSkills = Array.isArray(a.required_skills) ? a.required_skills.map(s => s.name).join(', ') : '';
+        const bSkills = Array.isArray(b.required_skills) ? b.required_skills.map(s => s.name).join(', ') : '';
+        return aSkills.localeCompare(bSkills);
+      },
+      render: (skills) => Array.isArray(skills) && skills.length > 0
+        ? skills.map(skill => skill.name).join(', ')
+        : '-',
+    },
+    {
+      title: 'Required Domains',
+      dataIndex: 'required_domains',
+      key: 'required_domains',
+      sorter: (a, b) => {
+        const aDomains = Array.isArray(a.required_domains) ? a.required_domains.map(d => d.name).join(', ') : '';
+        const bDomains = Array.isArray(b.required_domains) ? b.required_domains.map(d => d.name).join(', ') : '';
+        return aDomains.localeCompare(bDomains);
+      },
+      render: (domains) => Array.isArray(domains) && domains.length > 0
+        ? domains.map(domain => domain.name).join(', ')
+        : '-',
+    },
     {
       title: 'Actions',
       key: 'actions',
@@ -78,7 +123,7 @@ const TaskList = ({ tasks, loading, onEdit, onDelete }) => {
           <Popconfirm
             title="Delete the task"
             description="Are you sure you want to delete this task?"
-            onConfirm={() => onDelete(record.id)} // Use actual ID
+            onConfirm={() => onDelete(record.id)}
             okText="Yes"
             cancelText="No"
             icon={<QuestionCircleOutlined style={{ color: 'red' }} />}
@@ -97,8 +142,26 @@ const TaskList = ({ tasks, loading, onEdit, onDelete }) => {
       columns={columns}
       dataSource={tasks}
       loading={loading}
-      rowKey="id" // Use actual ID as key
-      // TODO: Add row selection, expandable rows for details, etc.
+      rowKey="id"
+      scroll={{ x: 'max-content' }}
+      rowSelection={{
+        type: 'checkbox',
+        // onChange: (selectedRowKeys, selectedRows) => { ... }
+      }}
+      expandable={{
+        expandedRowRender: (record) => (
+          <div style={{ margin: 0 }}>
+            <strong>Description:</strong> {record.description || '-'}<br />
+            <strong>Dependencies:</strong> {Array.isArray(record.dependencies) && record.dependencies.length > 0
+              ? record.dependencies.map(dep => dep.title_id || dep.id).join(', ')
+              : '-'}
+            <br />
+            <strong>Created At:</strong> {record.created_at ? new Date(record.created_at).toLocaleString() : '-'}
+            {/* Add more details as needed */}
+          </div>
+        ),
+        rowExpandable: (record) => !!record.description || (Array.isArray(record.dependencies) && record.dependencies.length > 0),
+      }}
     />
   );
 };

@@ -1,34 +1,36 @@
-import React, { useState, useEffect } from 'react'; // Import useEffect
-import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom'; // Added Navigate
-import { Layout, Menu, Breadcrumb, theme, Button } from 'antd'; // Added Button
+import React, { useState, useEffect } from 'react';
+import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
+import { Layout, Menu, Breadcrumb, theme, Button } from 'antd';
 import {
   UserOutlined,
   UnorderedListOutlined,
   ToolOutlined,
   HomeOutlined,
-  LogoutOutlined, // Added Logout icon
+  LogoutOutlined,
+  BarChartOutlined,
+  CalendarOutlined,
+  TeamOutlined
 } from '@ant-design/icons';
 import './App.css';
 import ResourceHub from './features/ResourceHub/ResourceHub';
-import LoginPage from './pages/LoginPage'; // Import Login Page
-import ProtectedRoute from './components/ProtectedRoute'; // Import Protected Route
+import LoginPage from './pages/LoginPage';
+import ProtectedRoute from './components/ProtectedRoute';
 import useAuthStore from './store/authStore';
 import TaskBacklog from './features/TaskBacklog/TaskBacklog';
-import AssignmentWorkbench from './features/AssignmentWorkbench/AssignmentWorkbench'; // Import AssignmentWorkbench
+import AssignmentWorkbench from './features/AssignmentWorkbench/AssignmentWorkbench';
+import AnalyticsDashboard from './features/Analytics/AnalyticsDashboard';
+import SprintManagement from './features/SprintManagement/SprintManagement';
+import UserManagement from './features/UserManagement/UserManagement';
 
-const { Header, Content, Footer, Sider } = Layout;
+const { Content, Footer, Sider } = Layout;
 
-// Placeholder Page Components
 const Dashboard = () => <div>Dashboard/Home Page Content</div>;
-// const TaskBacklog = () => <div>Task Backlog Page Content (Screen 2)</div>; // Remove placeholder
-// const AssignmentWorkbench = () => <div>Assignment Workbench Page Content (Screen 3)</div>; // Remove placeholder
 const NotFound = () => <div>404 Not Found</div>;
 
-// Main Application Layout Component (Protected)
 const AppLayout = () => {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
-  const { logout } = useAuthStore(); // Get logout action
+  const { logout } = useAuthStore();
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
@@ -38,6 +40,9 @@ const AppLayout = () => {
     if (path.startsWith('/resources')) return ['/resources'];
     if (path.startsWith('/tasks')) return ['/tasks'];
     if (path.startsWith('/assignments')) return ['/assignments'];
+    if (path.startsWith('/analytics')) return ['/analytics'];
+    if (path.startsWith('/sprints')) return ['/sprints'];
+    if (path.startsWith('/users')) return ['/users'];
     return ['/'];
   };
 
@@ -46,18 +51,23 @@ const AppLayout = () => {
     { key: '/resources', icon: <UserOutlined />, label: <Link to="/resources">Resource Hub</Link> },
     { key: '/tasks', icon: <UnorderedListOutlined />, label: <Link to="/tasks">Task Backlog</Link> },
     { key: '/assignments', icon: <ToolOutlined />, label: <Link to="/assignments">Assignments</Link> },
+    { key: '/analytics', icon: <BarChartOutlined />, label: <Link to="/analytics">Analytics</Link> },
+    { key: '/sprints', icon: <CalendarOutlined />, label: <Link to="/sprints">Sprints</Link> },
+    { key: '/users', icon: <TeamOutlined />, label: <Link to="/users">Users</Link> },
   ];
 
-  // Helper to get breadcrumb title
   const getBreadcrumbTitle = () => {
-     const key = getSelectedKeys()[0];
-     switch (key) {
-        case '/resources': return 'Resource Hub';
-        case '/tasks': return 'Task Backlog';
-        case '/assignments': return 'Assignments';
-        case '/':
-        default: return 'Dashboard';
-     }
+    const key = getSelectedKeys()[0];
+    switch (key) {
+      case '/resources': return 'Resource Hub';
+      case '/tasks': return 'Task Backlog';
+      case '/assignments': return 'Assignments';
+      case '/analytics': return 'Analytics';
+      case '/sprints': return 'Sprints';
+      case '/users': return 'Users';
+      case '/':
+      default: return 'Dashboard';
+    }
   };
 
   return (
@@ -66,26 +76,21 @@ const AppLayout = () => {
         <div className="demo-logo-vertical" style={{ height: '32px', margin: '16px', background: 'rgba(255, 255, 255, 0.2)', borderRadius: '6px', textAlign: 'center', color: 'white', lineHeight: '32px' }} >
           {collapsed ? 'RP' : 'Resource Planner'}
         </div>
-        <Menu theme="dark" selectedKeys={getSelectedKeys()} mode="inline" items={menuItems} />
-         {/* Logout Button in Sider Footer */}
-         <div style={{ position: 'absolute', bottom: '20px', width: '100%', textAlign: 'center' }}>
-            <Button type="primary" danger icon={<LogoutOutlined />} onClick={logout} ghost={!collapsed}>
-                {!collapsed && 'Logout'} {/* Use && */}
-            </Button>
-         </div>
+        <Menu theme="dark" selectedKeys={getSelectedKeys()} mode="inline" items={menuItems} style={{ textAlign: 'left' }} />
+        <div style={{ position: 'absolute', bottom: '20px', width: '100%', textAlign: 'center' }}>
+          <Button type="primary" danger icon={<LogoutOutlined />} onClick={logout} ghost={!collapsed}>
+            {!collapsed && 'Logout'}
+          </Button>
+        </div>
       </Sider>
       <Layout>
-        <Header style={{ padding: '0 16px', background: colorBgContainer, display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }} >
-           {/* Can add User profile dropdown here */}
-        </Header>
         <Content style={{ margin: '0 16px' }}>
-          {/* Updated Breadcrumb using items prop */}
           <Breadcrumb
-             style={{ margin: '16px 0' }}
-             items={[
-               { title: 'App' },
-               { title: getBreadcrumbTitle() }, // Use helper for title
-             ]}
+            style={{ margin: '16px 0' }}
+            items={[
+              { title: 'App' },
+              { title: getBreadcrumbTitle() },
+            ]}
           />
           <div
             style={{
@@ -95,12 +100,14 @@ const AppLayout = () => {
               borderRadius: borderRadiusLG,
             }}
           >
-            {/* Nested Routes for the protected layout */}
             <Routes>
-              <Route index element={<Dashboard />} /> {/* Default for "/" */}
+              <Route index element={<Dashboard />} />
               <Route path="resources" element={<ResourceHub />} />
               <Route path="tasks" element={<TaskBacklog />} />
               <Route path="assignments" element={<AssignmentWorkbench />} />
+              <Route path="analytics" element={<AnalyticsDashboard />} />
+              <Route path="sprints" element={<SprintManagement />} />
+              <Route path="users" element={<UserManagement />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </div>
@@ -113,27 +120,19 @@ const AppLayout = () => {
   );
 };
 
-
-// Main App component handling top-level routing
 function App() {
-  // No need to check auth state here, ProtectedRoute handles it
-  const { fetchUser, token } = useAuthStore(); // Get fetchUser action and token state
-
-  // Attempt to fetch user data if a token exists on initial load
+  const { fetchUser, token } = useAuthStore();
   useEffect(() => {
-    if (token) { // Check if token exists (from localStorage initially)
+    if (token) {
       fetchUser();
     }
-  }, [fetchUser, token]); // Dependencies: run only if fetchUser or token changes (should only run once on mount effectively)
+  }, [fetchUser, token]);
 
   return (
     <Routes>
-      {/* Public Login Route */}
       <Route path="/login" element={<LoginPage />} />
-
-      {/* Protected Application Routes */}
       <Route
-        path="/*" // Match all routes other than /login
+        path="/*"
         element={
           <ProtectedRoute>
             <AppLayout />

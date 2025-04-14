@@ -1,11 +1,10 @@
 import React from 'react';
-import { List, Tag, Typography, Spin } from 'antd'; // Use List component
+import { List, Tag, Typography, Spin } from 'antd';
 
 const { Text } = Typography;
 
-// Helper function to determine tag color based on priority
 const getPriorityColor = (priority) => {
-   switch (priority) {
+  switch (priority) {
     case 'Low': return 'blue';
     case 'Medium': return 'orange';
     case 'High': return 'red';
@@ -15,7 +14,6 @@ const getPriorityColor = (priority) => {
 };
 
 const UnassignedTasksList = ({ tasks, loading, selectedTaskId, onSelectTask }) => {
-
   return (
     <Spin spinning={loading}>
       <List
@@ -27,24 +25,30 @@ const UnassignedTasksList = ({ tasks, loading, selectedTaskId, onSelectTask }) =
             onClick={() => onSelectTask(task.id)}
             style={{
               cursor: 'pointer',
-              backgroundColor: selectedTaskId === task.id ? '#e6f7ff' : 'transparent', // Highlight selected
+              backgroundColor: selectedTaskId === task.id ? '#e6f7ff' : 'transparent',
               padding: '8px 12px',
-              borderRadius: '4px'
+              borderRadius: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
             }}
-            actions={[ // Simple actions placeholder for now
-                <Tag color={getPriorityColor(task.priority)}>{task.priority}</Tag>,
-                <Text type="secondary">{task.estimated_effort || '-'} hrs</Text>
-            ]}
           >
-            <List.Item.Meta
-              title={task.title_id}
-              // description={`Skills: ${task.requiredSkills?.map(s => s.name).join(', ') || 'None'}`} // Optional: Show skills
-            />
+            {/* Left: Task name */}
+            <div style={{ flex: 2, textAlign: 'left', fontWeight: 500 }}>
+              {task.title_id}
+            </div>
+            {/* Middle: Estimation */}
+            <div style={{ flex: 1, textAlign: 'left', color: '#888', fontSize: '0.95em' }}>
+              {task.estimated_effort ? Number(task.estimated_effort).toFixed(2) : '-'} hrs
+            </div>
+            {/* Right: Priority */}
+            <div style={{ flex: 1, textAlign: 'right' }}>
+              <Tag color={getPriorityColor(task.priority)}>{task.priority}</Tag>
+            </div>
           </List.Item>
         )}
         locale={{ emptyText: 'No Unassigned Tasks Found' }}
         size="small"
-        // TODO: Add pagination if list becomes long
       />
     </Spin>
   );

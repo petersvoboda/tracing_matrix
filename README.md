@@ -1,140 +1,188 @@
-# Resource Planning & Task Assignment Tool
+# Resource Planner – Fullstack Project
 
-This project is a web application designed for resource planning and task assignment, helping manage resources (human, AI tools, or combined), skills, domains, tasks, sprints, and assignments effectively. It includes features for suggesting resource assignments based on skill/domain fit and current load.
+## Overview
 
-## Technology Stack
+Resource Planner is a fullstack web application for project resource planning, task assignment, sprint management, and advanced analytics. It supports both human and AI resources, Kanban-style sprint assignment, and role-based user management.
 
-*   **Frontend:** React, Ant Design (UI Components), Zustand (State Management), React Router (Routing), Axios (HTTP Client)
-*   **Backend:** PHP/Laravel Framework
-*   **Database:** MySQL
+---
 
-## Architecture
+## Data and Communication Flow
 
-The application follows a standard client-server architecture:
-
-*   **Frontend (React Single-Page Application):** Built with React and Vite, using Ant Design for UI components, Zustand for global state management, and React Router for client-side navigation. It interacts with the backend via REST API calls.
-    *   **Key Directories:**
-        *   `src/components`: Reusable UI elements.
-        *   `src/features`: Components specific to application features (e.g., Resource Hub, Task Backlog).
-        *   `src/hooks`: Custom React hooks.
-        *   `src/lib`: Utilities, API client configuration (Axios).
-        *   `src/pages`: Top-level page components.
-        *   `src/store`: Zustand state management stores.
-        *   `src/routes`: Routing configuration.
-*   **Backend (Laravel REST API):** A PHP/Laravel application serving as a RESTful API. It handles business logic, data validation, authentication (using Laravel Sanctum/Passport), and database interactions (using Eloquent ORM).
-    *   Follows standard Laravel MVC structure (`app/Http/Controllers`, `app/Models`, `routes/api.php`).
-    *   Provides endpoints for managing resources, tasks, skills, domains, sprints, assignments, and user authentication.
-    *   Includes logic for calculating resource assignment suggestions based on fit scores and load.
-*   **Database (MySQL):** Stores all application data, including users, resources, tasks, skills, domains, sprints, and their relationships.
-
-### Communication Model
-
-The frontend communicates exclusively with the backend API over HTTPS using REST principles. The backend interacts with the MySQL database.
-
-```mermaid
-graph LR
-    A[User's Browser] -- HTTPS --> B(React Frontend SPA);
-    B -- REST API Calls (Axios) --> C{Laravel Backend API};
-    C -- SQL Queries (Eloquent) --> D[(MySQL Database)];
-
-    subgraph "Client-Side"
-        B
-    end
-
-    subgraph "Server-Side"
-        C
-        D
-    end
+```
++-------------------+         HTTP/REST         +-------------------+         SQL/ORM         +-------------------+
+|    React Frontend | <----------------------> |   Laravel Backend | <--------------------> |     MySQL DB      |
++-------------------+                         +-------------------+                         +-------------------+
+        |                                               |                                         |
+        | 1. User logs in, manages resources/tasks      |                                         |
+        |---------------------------------------------> |                                         |
+        | 2. Backend authenticates, checks roles        |                                         |
+        | <-------------------------------------------- |                                         |
+        | 3. User interacts with Kanban, analytics      |                                         |
+        |---------------------------------------------> |                                         |
+        | 4. Backend fetches/updates data, returns JSON |                                         |
+        | <-------------------------------------------- |                                         |
+        |                                               | 5. Eloquent ORM reads/writes tables      |
+        |                                               | <--------------------------------------> |
 ```
 
-## Deployment Instructions
+---
 
-These instructions assume deployment to a shared hosting environment or similar setup with Apache/Nginx, PHP, and MySQL.
+## Data Model (ERD, ASCII Art)
 
-### Backend (Laravel)
+```
++---------+      +-------------------+      +---------+
+|  users  |<---->|   assignments     |<---->| tasks   |
++---------+      +-------------------+      +---------+
+    |                |   resource_id  |          |
+    |                |   task_id      |          |
+    |                +----------------+          |
+    |                                            |
+    |                                            v
+    |                                      +-----------+
+    |                                      | sprints   |
+    |                                      +-----------+
+    |                                            ^
+    |                                            |
+    |                +-------------------+       |
+    |                |   resources       |-------+
+    |                +-------------------+
+    |                | skills (pivot)    |<----+
+    |                | domains (pivot)   |<--+ |
+    +----------------+-------------------+   | |
+                                             | |
++---------+      +---------+      +---------+| |
+| skills  |<-----|resource_|----->| domains || |
++---------+      |skills   |      +---------+| |
+                 +---------+                | |
+                                            | |
++---------+      +---------+      +---------+| |
+| tasks   |<-----|task_    |----->| domains || |
+|         |      |skills   |      +---------+| |
+|         |      +---------+                | |
+|         |                                 | |
+|         |      +---------+      +---------+| |
+|         +----->|task_    |----->| skills  |+--+
+|                |domains  |      +---------+
+|                +---------+
+```
 
-1.  **Clone Repository:** Clone the project repository to your server.
-    ```bash
-    git clone <your-repository-url>
-    cd <project-directory>/backend
-    ```
-2.  **Install Dependencies:**
-    ```bash
-    composer install --optimize-autoloader --no-dev
-    ```
-3.  **Configure Environment:**
-    *   Copy the example environment file: `cp .env.example .env`
-    *   Edit the `.env` file with your specific configuration:
-        *   `APP_NAME`, `APP_ENV` (set to `production`), `APP_KEY` (generate using `php artisan key:generate`), `APP_DEBUG` (set to `false`), `APP_URL`
-        *   Database connection details (`DB_CONNECTION`, `DB_HOST`, `DB_PORT`, `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`)
-        *   Any other necessary service keys or configurations.
-4.  **Run Migrations & Seeders:**
-    ```bash
-    php artisan migrate --seed --force # Use --force in production to bypass confirmation
-    ```
-5.  **Storage Link:**
-    ```bash
-    php artisan storage:link
-    ```
-6.  **Optimize:**
-    ```bash
-    php artisan config:cache
-    php artisan route:cache
-    php artisan view:cache
-    ```
-7.  **File Permissions:** Ensure the web server has the necessary write permissions for the `storage` and `bootstrap/cache` directories. Consult Laravel documentation for specific permission requirements.
-8.  **Web Server Configuration:**
-    *   Configure your web server (Apache/Nginx) to point the domain or subdomain's document root to the `public` directory of your Laravel installation (`<project-directory>/backend/public`).
-    *   **Apache:** Ensure `mod_rewrite` is enabled and the `.htaccess` file provided by Laravel in the `public` directory is respected (usually requires `AllowOverride All` in your Apache configuration for the directory).
-    *   **Nginx:** Use a configuration similar to the one provided in the Laravel deployment documentation, ensuring requests are directed to `index.php`. Example snippet:
-        ```nginx
-        location / {
-            try_files $uri $uri/ /index.php?$query_string;
-        }
-        ```
+---
 
-### Frontend (React)
+## API Structure (ASCII Endpoint Map)
 
-1.  **Navigate to Frontend Directory:**
-    ```bash
-    cd ../frontend # Assuming you are in the backend directory
-    # Or cd <project-directory>/frontend
-    ```
-2.  **Install Dependencies:**
-    ```bash
-    npm install
-    ```
-3.  **Configure Environment (if applicable):**
-    *   Check if there are environment variables needed for the frontend build (e.g., `VITE_API_BASE_URL`). If using Vite, these might be in `.env` or `.env.production`. Ensure the API base URL points to your deployed backend API.
-4.  **Build Production Assets:**
-    ```bash
-    npm run build
-    ```
-    This will create a `dist` (or `build`) folder containing the static assets.
-5.  **Upload Assets:** Upload the *contents* of the `dist` (or `build`) folder to the directory configured to serve your frontend application (e.g., the document root for the frontend's domain/subdomain, or a subfolder).
-6.  **Web Server Configuration (for Client-Side Routing):**
-    *   Configure your web server to handle client-side routing. All requests to non-asset paths should serve the `index.html` file from the build output.
-    *   **Apache:** Using `mod_rewrite` in an `.htaccess` file within the frontend's serving directory:
-        ```apache
-        <IfModule mod_rewrite.c>
-          RewriteEngine On
-          RewriteBase /
-          RewriteRule ^index\.html$ - [L]
-          RewriteCond %{REQUEST_FILENAME} !-f
-          RewriteCond %{REQUEST_FILENAME} !-d
-          RewriteCond %{REQUEST_FILENAME} !-l
-          RewriteRule . /index.html [L]
-        </IfModule>
-        ```
-    *   **Nginx:** Update the `location /` block for the frontend server:
-        ```nginx
-        location / {
-            try_files $uri $uri/ /index.html;
-        }
-        ```
+```
+/api/
+  |-- login, register, logout
+  |-- users/ (CRUD, role assignment)
+  |-- resources/ (CRUD)
+  |-- skills/, domains/ (list)
+  |-- tasks/ (CRUD, dependencies, required skills/domains)
+  |-- sprints/ (CRUD)
+  |-- assignments/ (assign/unassign resources to tasks)
+  |-- analytics/
+        |-- resource-utilization
+        |-- assignment-history
+        |-- completion-rates
+        |-- task-blockers
+        |-- ai-tool-impact
+        |-- burnup-burndown
+        |-- resource-availability-heatmap
+```
 
-### Environment Variables & Security
+---
 
-*   Ensure sensitive information (database passwords, API keys) is stored securely in environment variables (`.env` file for backend) and *not* committed to version control.
-*   Configure appropriate file permissions on the server.
-*   Keep dependencies updated.
+## Features
+
+- **Resource Management:** Add/edit/delete resources (Human, AI Tool, Human+AI Tool), availability, skills, domains, productivity multipliers, working hours, planned leave.
+- **Task Backlog:** Full CRUD for tasks, required skills/domains, dependencies, priorities, assignment to sprints/resources.
+- **Sprint Management:** Kanban board for current/future sprints, collapsible past sprints, drag-and-drop task assignment, backlog always last.
+- **Assignment Workbench:** Intelligent suggestions, resource load visualization, dependency awareness.
+- **User Management:** Add/edit/delete users, assign roles (Project Manager, Team Member), role-based access control.
+- **Analytics Dashboard:** Resource utilization, assignment history, completion rates, blockers, AI tool impact, burnup/burndown, resource availability heatmap.
+- **Role-based Authorization:** Only Project Managers can manage users, sprints, and resources.
+- **Modern UI:** Ant Design, responsive layout, drag-and-drop, tooltips, modals, and more.
+
+---
+
+## Tech Stack
+
+- **Frontend:** React, Ant Design, Zustand, @hello-pangea/dnd, Axios
+- **Backend:** Laravel (PHP), Sanctum (API auth), Fruitcake CORS
+- **Database:** MySQL (or compatible)
+- **Deployment:** Works with XAMPP/Apache, supports CORS, .env configuration
+
+---
+
+## Setup Instructions
+
+### Backend
+
+1. **Install dependencies:**
+   ```
+   composer install
+   ```
+
+2. **Configure .env:**
+   - Set your database credentials.
+   - Set `APP_URL` to your backend URL (e.g., `http://localhost:8000`).
+
+3. **Migrate and seed database:**
+   ```
+   php artisan migrate
+   php artisan db:seed
+   ```
+
+4. **CORS:**
+   - Ensure `config/cors.php` allows your frontend origin and credentials.
+   - Add CORS headers and OPTIONS handler to your public/.htaccess if using Apache.
+
+5. **Start backend:**
+   ```
+   php artisan serve
+   ```
+
+### Frontend
+
+1. **Install dependencies:**
+   ```
+   npm install
+   ```
+
+2. **Configure API URL:**
+   - If needed, set `VITE_API_BASE_URL` in `.env` (default: `http://localhost:8000/api`).
+
+3. **Start frontend:**
+   ```
+   npm run dev
+   ```
+
+---
+
+## Usage
+
+- **Login:** Use a user with role `manager` for full access.
+- **User Management:** Only Project Managers can add/edit/delete users and assign roles.
+- **Resource/Task/Sprint Management:** Full CRUD, Kanban board for sprints, drag-and-drop task assignment.
+- **Analytics:** Access the Analytics tab for live dashboards and advanced charts.
+- **Role-based UI:** Features are shown/hidden based on user role.
+
+---
+
+## Deployment Notes
+
+- For production, restrict CORS origins in `config/cors.php` and `.htaccess`.
+- Use HTTPS and secure cookies for authentication.
+- Set up environment variables and database credentials in `.env`.
+
+---
+
+## Credits
+
+- Built with Laravel, React, Ant Design, Zustand, and more.
+- Drag-and-drop powered by @hello-pangea/dnd.
+
+---
+
+## License
+
+MIT License (or specify your license here)

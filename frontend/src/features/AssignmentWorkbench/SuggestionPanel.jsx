@@ -2,10 +2,10 @@ import React from 'react';
 import { List, Button, Spin, Typography, Tooltip, Progress, Tag, Popover } from 'antd';
 import { CheckOutlined } from '@ant-design/icons';
 import useAssignmentStore from '../../store/assignmentStore';
+import useTaskStore from '../../store/taskStore';
 
 const { Text, Paragraph } = Typography;
 
-// Helper to format score breakdown
 const renderScoreBreakdown = (breakdown) => {
   if (!breakdown) return null;
   return (
@@ -19,20 +19,21 @@ const renderScoreBreakdown = (breakdown) => {
   );
 };
 
-
 const SuggestionPanel = ({ selectedTaskId }) => {
   const {
     suggestions,
     loadingSuggestions,
     assignResource,
     loadingAssignment,
-    resourceLoads // Get load data from store
+    resourceLoads
   } = useAssignmentStore();
+
+  const { tasks } = useTaskStore();
+  const selectedTask = tasks.find(t => t.id === selectedTaskId);
 
   const handleAssign = (resourceId) => {
     if (selectedTaskId) {
       assignResource(selectedTaskId, resourceId);
-      // TODO: Add success/error handling feedback (message.success/error)
     }
   };
 
@@ -51,41 +52,69 @@ const SuggestionPanel = ({ selectedTaskId }) => {
   return (
     <List
       itemLayout="horizontal"
-      dataSource={suggestions} // Use suggestions from store
+      dataSource={suggestions}
+      style={{ margin: 0, padding: 0 }}
       renderItem={(suggestion) => {
         const loadData = resourceLoads[suggestion.resource_id];
-        const loadPercent = loadData?.load_percentage ?? suggestion.projected_load_percent; // Use fetched load if available, else fallback
+        const loadPercent = loadData?.load_percentage ?? suggestion.projected_load_percent;
         const loadStatus = loadPercent > 100 ? 'exception' : (loadPercent > 85 ? 'warning' : 'normal');
+        const isAssigned = selectedTask?.assignedResource?.id === suggestion.resource_id;
+
+        // Button style logic
+        const buttonProps = isAssigned
+          ? {
+              type: "primary",
+              ghost: false,
+              style: { background: "#1677ff", borderColor: "#1677ff" },
+              icon: <CheckOutlined style={{ color: "#fff" }} />,
+              disabled: true,
+            }
+          : {
+              type: "primary",
+              ghost: true,
+              style: { borderColor: "#1677ff", background: "#fff" },
+              icon: <CheckOutlined style={{ color: "#1677ff" }} />,
+              disabled: false,
+            };
 
         return (
           <List.Item
             key={suggestion.resource_id}
-            actions={[
-              <Tooltip title="Assign this resource">
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              padding: '8px 0',
+            }}
+          >
+            {/* Left: Two-row flex column */}
+            <div style={{ flex: 2, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              {/* First row: Name and Score */}
+              <div style={{ textAlign: 'left', fontWeight: 500 }}>
+                <Popover content={renderScoreBreakdown(suggestion.score_breakdown)} title="Score Breakdown" trigger="hover">
+                  <span>
+                    {suggestion.name_identifier} (<Text strong>Score: {suggestion.fit_score}</Text>)
+                  </span>
+                </Popover>
+              </div>
+              {/* Second row: Progress bar and resource type */}
+              <div style={{ textAlign: 'left', marginTop: 4 }}>
+                <Tooltip title={`Projected Load: ${loadPercent}% ${loadData ? '' : '(Placeholder)'}`}>
+                  <Progress percent={loadPercent} status={loadStatus} size="small" showInfo={false} style={{ width: '100px', marginRight: '12px', display: 'inline-block' }} />
+                </Tooltip>
+                <Tag style={{ marginLeft: '8px' }}>{suggestion.type}</Tag>
+              </div>
+            </div>
+            {/* Right: Assign button, vertically centered */}
+            <div style={{ flex: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', paddingLeft: 16 }}>
+              <Tooltip title={isAssigned ? "This resource is already assigned" : "Assign this resource"}>
                 <Button
-                  type="primary"
-                  shape="circle"
-                  icon={<CheckOutlined />}
+                  {...buttonProps}
                   onClick={() => handleAssign(suggestion.resource_id)}
-                  loading={loadingAssignment} // Show loading on button when assigning
+                  loading={loadingAssignment}
                   size="small"
                 />
               </Tooltip>
-            ]}
-          >
-            <List.Item.Meta
-              title={
-                 <Popover content={renderScoreBreakdown(suggestion.score_breakdown)} title="Score Breakdown" trigger="hover">
-                    <span>{suggestion.name_identifier} (<Text strong>Score: {suggestion.fit_score}</Text>)</span>
-                 </Popover>
-              }
-              description={
-                <Tooltip title={`Projected Load: ${loadPercent}% ${loadData ? '' : '(Placeholder)'}`}>
-                    <Progress percent={loadPercent} status={loadStatus} size="small" showInfo={false} style={{width: '80px', marginRight: '8px'}} />
-                    <Tag>{suggestion.type}</Tag>
-                </Tooltip>
-              }
-            />
+            </div>
           </List.Item>
         );
       }}
